@@ -26,7 +26,7 @@ def intersecoes_iguais(i1, i2):
 
 #retorna A12, em vez de 'A12'
 def intersecao_para_str(i):
-    return (obtem_col(i)) + str(obtem_lin(i))
+    return obtem_col(i) + str(obtem_lin(i))
 
 
 def str_para_intersecao(s):
@@ -87,9 +87,9 @@ def pedras_iguais(p1, p2):
 
 
 def pedra_para_str(p):
-    if eh_pedra_branca(p):
+    if p == cria_pedra_branca():
         return 'O'
-    elif eh_pedra_preta(p):
+    elif p == cria_pedra_preta():
         return 'X'
     else:
         return '.'
@@ -278,3 +278,131 @@ def obtem_territorios(g):
                 territorios.append(ordena_intersecoes(tuple(territorio)))
 
     return ordena_intersecoes(territorios)
+
+
+
+def obtem_adjacentes_diferentes(g, t):
+    adjacentes = set()
+
+    for i in t:
+        vizinhas = obtem_intersecoes_adjacentes(i, obtem_ultima_intersecao(g))
+        for vizinha in vizinhas:
+            if eh_intersecao_valida(g, vizinha):
+                if obtem_pedra(g, i) == '.' and obtem_pedra(g, vizinha) != '.':
+                    adjacentes.add(vizinha)
+                elif obtem_pedra(g, i) != '.' and obtem_pedra(g, vizinha) == '.':
+                    adjacentes.add(vizinha)
+
+    return ordena_intersecoes(tuple(sorted(adjacentes)))
+
+
+
+def jogada(g, i, p):
+    g = coloca_pedra(g, i, p)
+    
+    cadeias_adjacentes = []
+    for adjacente in obtem_intersecoes_adjacentes(i, obtem_ultima_intersecao(g)):
+        if obtem_pedra(g, adjacente) != '.' and obtem_cadeia(g, adjacente) not in cadeias_adjacentes:
+            cadeias_adjacentes.append(obtem_cadeia(g, adjacente))
+    
+    if p == 'X':
+        adversario = 'O'
+    else:
+        adversario = 'X'
+
+    for cadeia in cadeias_adjacentes:
+        if obtem_pedra(g, cadeia[0]) == adversario and not tem_liberdade(g, cadeia):
+            g = remove_cadeia(g, cadeia)
+    
+    return g
+
+
+def tem_liberdade(g, cadeia):
+    for intersecao in cadeia:
+        adjacentes = obtem_intersecoes_adjacentes(intersecao, obtem_ultima_intersecao(g))
+        for adjacente in adjacentes:
+            if eh_intersecao_valida(g, adjacente):
+                if obtem_pedra(g, adjacente) == cria_pedra_neutra():
+                    return True
+    return False
+
+
+
+
+
+def obtem_pedras_jogadores(g):
+    p_b = 0
+    p_p = 0
+
+    for col in g:
+        for i in col:
+            if i == cria_pedra_branca():
+                p_b += 1
+            elif i == cria_pedra_preta():
+                p_p += 1
+
+    return (p_b, p_p)
+
+
+def calcula_pontos(g):
+    pontos_branco = 0
+    pontos_preto = 0
+    
+    # Contagem das pedras no tabuleiro
+    for linha in g:
+        pontos_branco += linha.count('O')
+        pontos_preto += linha.count('X')
+    
+    # Obtenção dos territórios
+    territorios = obtem_territorios(g)
+    
+    # Cálculo dos pontos dos territórios
+    for territorio in territorios:
+        fronteira_ocupada = True
+        
+        # Verificar se a fronteira do território pertence apenas ao mesmo jogador
+        for intersecao in obtem_adjacentes_diferentes(g, territorio):
+            pedra_intersecao = obtem_pedra(g, intersecao)
+            if pedra_intersecao != cria_pedra_neutra() and pedra_intersecao != obtem_pedra(g, territorio[0]):
+                fronteira_ocupada = False
+                break
+        
+        # Se a fronteira estiver ocupada apenas pelo mesmo jogador, adicionar pontos correspondentes
+        if fronteira_ocupada:
+            if obtem_pedra(g, territorio[0]) == cria_pedra_branca():
+                pontos_branco += len(territorio)
+            elif obtem_pedra(g, territorio[0]) == cria_pedra_preta():
+                pontos_preto += len(territorio)
+    
+    return pontos_branco, pontos_preto
+
+
+
+
+def eh_jogada_legal(g, i, p, l):
+    # Verificar se a interseção é válida
+    if not eh_intersecao_valida(g, i) or obtem_pedra(g, i) != cria_pedra_neutra():
+        return False
+    
+    # Criar cópias temporárias dos gobans
+    g_temp = cria_copia_goban(g)
+    l_temp = cria_copia_goban(l)
+    
+    # Colocar a pedra na interseção
+    coloca_pedra(g_temp, i, p)
+    
+    # Verificar Suicídio (a jogada não é legal se a pedra não tem liberdade)
+    if not tem_liberdade(g_temp, i):
+        return False
+
+    # Verificar Repetição (Ko)
+    if gobans_iguais(g_temp, l_temp):
+        return False
+    
+    # Verificar se a jogada cria um estado repetido após a resolução da jogada anterior
+    g_anterior = cria_copia_goban(g)
+    coloca_pedra(g_anterior, i, p)
+    if gobans_iguais(g_anterior, l_temp):
+        return False
+    
+    return True
