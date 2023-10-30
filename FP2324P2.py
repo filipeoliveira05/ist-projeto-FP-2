@@ -77,7 +77,7 @@ def cria_pedra_neutra():
 
 
 def eh_pedra(arg):
-    return arg in ['O', 'X', '.']
+    return arg in [cria_pedra_branca(), cria_pedra_preta(), cria_pedra_neutra()]
 
 def eh_pedra_branca(p):
     return eh_pedra(p) and p == cria_pedra_branca()
@@ -109,7 +109,7 @@ def cria_goban_vazio(n):
     if n not in [9, 13, 19]:
         raise ValueError('cria_goban_vazio: argumento invalido')
     
-    col = ['.',] * int(n)
+    col = [cria_pedra_neutra(),] * int(n)
     g_empty = [col[:] for _ in range(int(n))]
     
     return g_empty
@@ -164,20 +164,20 @@ def obtem_pedra(g, i):
     p = g[col_index][lin_index]
 
     if eh_pedra_branca(p):
-        return 'O'
+        return cria_pedra_branca()
     elif eh_pedra_preta(p):
-        return 'X'
+        return cria_pedra_preta()
     else:
-        return '.'
+        return cria_pedra_neutra()
 
 
 def obtem_cadeia(g, i):
     if obtem_pedra(g, i) == cria_pedra_branca():
-        condition = 'O'
+        condition = cria_pedra_branca()
     elif obtem_pedra(g, i) == cria_pedra_preta():
-        condition = 'X'
+        condition = cria_pedra_preta()
     else:
-        condition = '.'
+        condition = cria_pedra_neutra()
     
     chain = []
     queue = [i]
@@ -209,7 +209,7 @@ def remove_pedra(g, i):
     n = len(g)
 
     if 0 <= col_index < n and 0 <= lin_index < n:
-        g[col_index][lin_index] = '.'
+        g[col_index][lin_index] = cria_pedra_neutra()
 
     return g
 
@@ -221,7 +221,7 @@ def remove_cadeia(g, t):
         lin_index = int(obtem_lin(i)) - 1
         
         if 0 <= col_index < n and 0 <= lin_index < n:
-            g[col_index][lin_index] = '.'
+            g[col_index][lin_index] = cria_pedra_neutra()
 
     return g
 
@@ -233,7 +233,7 @@ def eh_goban(arg):
         if len(arg[c]) != len(arg[0]) or len(arg[c]) not in [9, 13, 19] or not isinstance(arg[c], list):
             return False
         for l in range(len(arg[c])):
-            if arg[c][l] not in ['O', 'X', '.']:
+            if arg[c][l] not in [cria_pedra_branca(), cria_pedra_preta(), cria_pedra_neutra()]:
                 return False
             
     return True
@@ -289,13 +289,13 @@ def obtem_territorios(g):
         territorio.add(i)
         vizinhas = obtem_intersecoes_adjacentes(i, obtem_ultima_intersecao(g))
         for vizinha in vizinhas:
-            if obtem_pedra(g, vizinha) == '.' and vizinha not in visitadas:
+            if obtem_pedra(g, vizinha) == cria_pedra_neutra() and vizinha not in visitadas:
                 explorar_territorio(vizinha, territorio)
     
     for col in range(len(g)):
         for lin in range(len(g[0])):
             i = cria_intersecao(chr(ord('A') + col), lin + 1)
-            if obtem_pedra(g, i) == '.' and i not in visitadas:
+            if obtem_pedra(g, i) == cria_pedra_neutra() and i not in visitadas:
                 territorio = set()
                 explorar_territorio(i, territorio)
                 territorios.append(ordena_intersecoes(tuple(territorio)))
@@ -311,9 +311,9 @@ def obtem_adjacentes_diferentes(g, t):
         vizinhas = obtem_intersecoes_adjacentes(i, obtem_ultima_intersecao(g))
         for vizinha in vizinhas:
             if eh_intersecao_valida(g, vizinha):
-                if obtem_pedra(g, i) == '.' and obtem_pedra(g, vizinha) != '.':
+                if obtem_pedra(g, i) == cria_pedra_neutra() and obtem_pedra(g, vizinha) != cria_pedra_neutra():
                     adjacentes.add(vizinha)
-                elif obtem_pedra(g, i) != '.' and obtem_pedra(g, vizinha) == '.':
+                elif obtem_pedra(g, i) != cria_pedra_neutra() and obtem_pedra(g, vizinha) == cria_pedra_neutra():
                     adjacentes.add(vizinha)
 
     return ordena_intersecoes(tuple(sorted(adjacentes)))
@@ -325,13 +325,13 @@ def jogada(g, i, p):
     
     cadeias_adjacentes = []
     for adjacente in obtem_intersecoes_adjacentes(i, obtem_ultima_intersecao(g)):
-        if obtem_pedra(g, adjacente) != '.' and obtem_cadeia(g, adjacente) not in cadeias_adjacentes:
+        if obtem_pedra(g, adjacente) != cria_pedra_neutra() and obtem_cadeia(g, adjacente) not in cadeias_adjacentes:
             cadeias_adjacentes.append(obtem_cadeia(g, adjacente))
     
-    if p == 'X':
-        adversario = 'O'
+    if p == cria_pedra_preta():
+        adversario = cria_pedra_branca()
     else:
-        adversario = 'X'
+        adversario = cria_pedra_preta()
 
     for cadeia in cadeias_adjacentes:
         if obtem_pedra(g, cadeia[0]) == adversario and not tem_liberdade(g, cadeia):
@@ -350,9 +350,6 @@ def tem_liberdade(g, cadeia):
     return False
 
 
-
-
-
 def obtem_pedras_jogadores(g):
     p_b = 0
     p_p = 0
@@ -367,65 +364,22 @@ def obtem_pedras_jogadores(g):
     return (p_b, p_p)
 
 
+
 def calcula_pontos(g):
-    pontos_branco = 0
-    pontos_preto = 0
+    pontos = obtem_pedras_jogadores(g)
+    pontos_branco = pontos[0]
+    pontos_preto = pontos[1]
     
-    # Contagem das pedras no tabuleiro
-    for linha in g:
-        pontos_branco += linha.count('O')
-        pontos_preto += linha.count('X')
-    
-    # Obtenção dos territórios
     territorios = obtem_territorios(g)
     
-    # Cálculo dos pontos dos territórios
     for territorio in territorios:
-        fronteira_ocupada = True
+        fronteira = obtem_adjacentes_diferentes(g, territorio)
         
-        # Verificar se a fronteira do território pertence apenas ao mesmo jogador
-        for intersecao in obtem_adjacentes_diferentes(g, territorio):
-            pedra_intersecao = obtem_pedra(g, intersecao)
-            if pedra_intersecao != cria_pedra_neutra() and pedra_intersecao != obtem_pedra(g, territorio[0]):
-                fronteira_ocupada = False
-                break
+        mesma_cor = all(obtem_pedra(g, i) == obtem_pedra(g, fronteira[0]) for i in fronteira)
         
-        # Se a fronteira estiver ocupada apenas pelo mesmo jogador, adicionar pontos correspondentes
-        if fronteira_ocupada:
-            if obtem_pedra(g, territorio[0]) == cria_pedra_branca():
-                pontos_branco += len(territorio)
-            elif obtem_pedra(g, territorio[0]) == cria_pedra_preta():
-                pontos_preto += len(territorio)
+        if mesma_cor and obtem_pedra(g, fronteira[0]) == cria_pedra_branca():
+            pontos_branco += len(territorio)
+        elif mesma_cor and obtem_pedra(g, fronteira[0]) == cria_pedra_preta():
+            pontos_preto += len(territorio)
     
-    return pontos_branco, pontos_preto
-
-
-
-
-def eh_jogada_legal(g, i, p, l):
-    # Verificar se a interseção é válida
-    if not eh_intersecao_valida(g, i) or obtem_pedra(g, i) != cria_pedra_neutra():
-        return False
-    
-    # Criar cópias temporárias dos gobans
-    g_temp = cria_copia_goban(g)
-    l_temp = cria_copia_goban(l)
-    
-    # Colocar a pedra na interseção
-    coloca_pedra(g_temp, i, p)
-    
-    # Verificar Suicídio (a jogada não é legal se a pedra não tem liberdade)
-    if not tem_liberdade(g_temp, i):
-        return False
-
-    # Verificar Repetição (Ko)
-    if gobans_iguais(g_temp, l_temp):
-        return False
-    
-    # Verificar se a jogada cria um estado repetido após a resolução da jogada anterior
-    g_anterior = cria_copia_goban(g)
-    coloca_pedra(g_anterior, i, p)
-    if gobans_iguais(g_anterior, l_temp):
-        return False
-    
-    return True
+    return (pontos_branco, pontos_preto)
