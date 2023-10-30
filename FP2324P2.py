@@ -1,6 +1,6 @@
 #TAD Intersecao
 def cria_intersecao(col, lin):
-    if not isinstance(col, str) or not ord('A') <= ord(col) <= ord('S'):
+    if not isinstance(col, str) or not ord('A') <= ord(col) <= ord('S') or len(col) != 1:
         raise ValueError('cria_intersecao: argumentos invalidos')
     if not isinstance(lin, int) or not (1 <= lin <= 19):
         raise ValueError('cria_intersecao: argumentos invalidos')
@@ -12,12 +12,16 @@ def obtem_col(i):
 
 
 def obtem_lin(i):
-    return i[1]
+    if isinstance(i, tuple):
+        return i[1]
+    elif isinstance(i, str):
+        return i[1:]
 
 
-#não verifica se as letras e números estão dentro dos limites
 def eh_intersecao(arg):
-    return isinstance(arg, tuple) and len(arg) == 2 and isinstance(obtem_col(arg), str) and isinstance(obtem_lin(arg), int)
+    return (isinstance(arg, tuple) and len(arg) == 2 and 
+            isinstance(obtem_col(arg), str) and isinstance(obtem_lin(arg), int) and 
+            ord('A') <= ord(obtem_col(arg)) <= ord('S') and len(obtem_col) == 1 and 1 <= obtem_lin(arg) <= 19)
 
 
 def intersecoes_iguais(i1, i2):
@@ -76,10 +80,10 @@ def eh_pedra(arg):
     return arg in ['O', 'X', '.']
 
 def eh_pedra_branca(p):
-    return eh_pedra(p) and p == 'O'
+    return eh_pedra(p) and p == cria_pedra_branca()
 
 def eh_pedra_preta(p):
-    return eh_pedra(p) and p == 'X'
+    return eh_pedra(p) and p == cria_pedra_preta()
 
 
 def pedras_iguais(p1, p2):
@@ -105,33 +109,46 @@ def cria_goban_vazio(n):
     if n not in [9, 13, 19]:
         raise ValueError('cria_goban_vazio: argumento invalido')
     
-    col = ['.',] * n
-    g_empty = [col[:] for _ in range(n)]
+    col = ['.',] * int(n)
+    g_empty = [col[:] for _ in range(int(n))]
     
     return g_empty
 
 
 def cria_goban(n, ib, ip):
     if n not in [9, 13, 19] or not isinstance(ib, tuple) or not isinstance(ip, tuple):
-        raise ValueError('cria_goban_vazio: argumento invalido')
+        raise ValueError('cria_goban: argumento invalidos')
     
     g = cria_goban_vazio(n)
 
-    for b in ib:
+    for b in tuple(ib):
         col_index = ord(obtem_col(b)) - ord('A')
         lin_index = int(obtem_lin(b)) - 1
-        g[col_index][lin_index] = 'O'
+        if 0 <= col_index < n and 0 <= lin_index < n:
+            g[col_index][lin_index] = cria_pedra_branca()
 
-    for p in ip:
+
+    for p in tuple(ip):
         col_index = ord(obtem_col(p)) - ord('A')
         lin_index = int(obtem_lin(p)) - 1
-        g[col_index][lin_index] = 'X'
+        if 0 <= col_index < n and 0 <= lin_index < n:
+            g[col_index][lin_index] = cria_pedra_preta()
     
     return g
 
 
 def cria_copia_goban(t):
-    return t
+    n = len(t)
+    g_copia = []
+
+    for col in range(n):
+        col_copia = []
+        for lin in range(n):
+            col_copia.append(t[col][lin])
+        g_copia.append(col_copia)
+    
+    return g_copia
+
 
 
 def obtem_ultima_intersecao(g):
@@ -155,9 +172,9 @@ def obtem_pedra(g, i):
 
 
 def obtem_cadeia(g, i):
-    if obtem_pedra(g, i) == 'O':
+    if obtem_pedra(g, i) == cria_pedra_branca():
         condition = 'O'
-    elif obtem_pedra(g, i) == 'X':
+    elif obtem_pedra(g, i) == cria_pedra_preta():
         condition = 'X'
     else:
         condition = '.'
@@ -178,8 +195,10 @@ def obtem_cadeia(g, i):
 def coloca_pedra(g, i, p):
     col_index = ord(obtem_col(i)) - ord('A')
     lin_index = int(obtem_lin(i)) - 1
+    n = len(g)
 
-    g[col_index][lin_index] = p
+    if 0 <= col_index < n and 0 <= lin_index < n:
+        g[col_index][lin_index] = p
 
     return g
 
@@ -187,18 +206,22 @@ def coloca_pedra(g, i, p):
 def remove_pedra(g, i):
     col_index = ord(obtem_col(i)) - ord('A')
     lin_index = int(obtem_lin(i)) - 1
+    n = len(g)
 
-    g[col_index][lin_index] = '.'
+    if 0 <= col_index < n and 0 <= lin_index < n:
+        g[col_index][lin_index] = '.'
 
     return g
 
 
 def remove_cadeia(g, t):
+    n = len(g)
     for i in t:
         col_index = ord(obtem_col(i)) - ord('A')
         lin_index = int(obtem_lin(i)) - 1
-
-        g[col_index][lin_index] = '.'
+        
+        if 0 <= col_index < n and 0 <= lin_index < n:
+            g[col_index][lin_index] = '.'
 
     return g
 
