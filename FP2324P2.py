@@ -383,3 +383,63 @@ def calcula_pontos(g):
             pontos_preto += len(territorio)
     
     return (pontos_branco, pontos_preto)
+
+
+
+def eh_jogada_legal(g, i, p, l):
+    if obtem_pedra(g, i) != cria_pedra_neutra() or p == cria_pedra_neutra():
+        return False
+    
+    # Suicídio
+    g_temp = coloca_pedra(g, i, p)
+    cadeia = obtem_cadeia(g_temp, i)
+    if not tem_liberdade(g_temp, cadeia):
+        return False
+    
+    # Repetição (ko)
+    if gobans_iguais(g_temp, l):
+        return False
+    
+    return True
+
+
+
+def turno_jogador(g, p, l):
+    jogada = input(f"Escreva uma intersecao ou 'P' para passar [{pedra_para_str(p)}]:").strip().upper()
+
+    if jogada == 'P':
+        return False
+    elif eh_intersecao_valida(g, str_para_intersecao(jogada)) and eh_jogada_legal(g, str_para_intersecao(jogada), p, l):
+        coloca_pedra(g, str_para_intersecao(jogada), p)
+        return True
+    
+
+
+def go(n, tb, tp):
+    if not eh_goban(cria_goban_vazio(n)) or not isinstance(tb, tuple) or not isinstance(tp, tuple):
+        raise ValueError('go: argumentos invalidos')
+    
+    g = cria_goban(n, tb, tp)
+    ultimo_estado = None
+    passou = [False, False]  # Lista para verificar se cada jogador passou a vez
+
+    while True:
+        goban_para_str(g)
+        pontos_branco, pontos_preto = calcula_pontos(g)
+        print(f"Branco (O) tem {pontos_branco} pontos")
+        print(f"Preto (X) tem {pontos_preto} pontos")
+
+        jogador = cria_pedra_branca() if sum(passou) % 2 == 0 else cria_pedra_preta()
+        if not turno_jogador(g, jogador, ultimo_estado):
+            passou[sum(passou) % 2] = True
+        else:
+            passou[sum(passou) % 2] = False
+            ultimo_estado = cria_copia_goban(g)
+
+        if all(passou):  # Ambos os jogadores passaram
+            break
+
+    pontos_branco, pontos_preto = calcula_pontos(g)
+    print(f"Branco (O) finalizou com {pontos_branco} pontos")
+    print(f"Preto (X) finalizou com {pontos_preto} pontos")
+    return pontos_branco > pontos_preto
