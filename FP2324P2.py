@@ -119,6 +119,24 @@ def cria_goban(n, ib, ip):
     if n not in [9, 13, 19] or not isinstance(ib, tuple) or not isinstance(ip, tuple):
         raise ValueError('cria_goban: argumentos invalidos')
     
+    # Verifica se existem elementos iguais em ib
+    el_ib = set()
+    for el in ib:
+        if el in el_ib:
+            raise ValueError('cria_goban: argumentos invalidos')
+        el_ib.add(el)
+
+    # Verifica se existem elementos iguais em ip
+    el_ip = set()
+    for el in ip:
+        if el in el_ip:
+            raise ValueError('cria_goban: argumentos invalidos')
+        el_ip.add(el)
+
+    # Verifica se existem elementos iguais em ambos os tuplos
+    if el_ib & el_ip:
+        raise ValueError('cria_goban: elementos iguais encontrados em ib e ip')
+
     g = cria_goban_vazio(n)
 
     for b in tuple(ib):
@@ -357,6 +375,11 @@ def obtem_pedras_jogadores(g):
 
 
 def calcula_pontos(g):
+    i_u = obtem_ultima_intersecao(g)
+    n = i_u[1]
+    if g == cria_goban_vazio(n):
+        return (0,0)
+    
     pontos = obtem_pedras_jogadores(g)
     pontos_branco = pontos[0]
     pontos_preto = pontos[1]
@@ -395,17 +418,48 @@ def eh_jogada_legal(g, i, p, l):
     return True
 
 
-def turno_jogador(g, p, l):
-    jogada = input(f"Escreva uma intersecao ou 'P' para passar [{pedra_para_str(p)}]:").strip().upper()
+def turno_jogador(g, p, l):    
+    while True:
+        move = input(f"Escreva uma intersecao ou 'P' para passar [{pedra_para_str(p)}]:").strip().upper()
 
-    if jogada == 'P':
-        return False
-    elif eh_intersecao_valida(g, str_para_intersecao(jogada)) and eh_jogada_legal(g, str_para_intersecao(jogada), p, l):
-        g = coloca_pedra(g, str_para_intersecao(jogada), p)
-        return True
+        if move == 'P':
+            return False
+        elif eh_intersecao_valida(g, str_para_intersecao(move)) and eh_jogada_legal(g, str_para_intersecao(move), p, l):
+            jogada(g, str_para_intersecao(move), p)
+            return True
 
-ib = tuple(str_para_intersecao(i) for i in ('C1', 'C2', 'C3', 'D2', 'D3', 'D4', 'A3', 'B3'))
-ip = tuple(str_para_intersecao(i) for i in ('A1', 'A2', 'B1', 'E4', 'E5', 'F4', 'F5', 'G6', 'G7'))
-g = cria_goban(9, ib, ip)
-turno_jogador(g, cria_pedra_branca, cria_goban_vazio(9))
 
+
+def go(n, tb, tp):
+    try:
+        g = cria_goban(n, tb, tp)
+    except ValueError:
+        raise ValueError('go: argumentos invalidos')
+    
+    jogador_branco = cria_pedra_branca()
+    jogador_preto = cria_pedra_preta()
+    ultimo_estado = None
+
+    while True:
+        pontos_branco, pontos_preto = calcula_pontos(g)
+        print(f"Branco (O) tem {pontos_branco} pontos")
+        print(f"Preto (X) tem {pontos_preto} pontos")
+        print(goban_para_str(g))
+        
+        turno_preto = turno_jogador(g, jogador_preto, ultimo_estado)
+        if not turno_preto:
+            break
+
+        pontos_branco, pontos_preto = calcula_pontos(g)
+        print(f"Branco (O) tem {pontos_branco} pontos")
+        print(f"Preto (X) tem {pontos_preto} pontos")
+        print(goban_para_str(g))
+        
+        turno_branco = turno_jogador(g, jogador_branco, ultimo_estado)
+        if not turno_branco:
+            break
+        
+        ultimo_estado = cria_copia_goban(g)
+
+    pontos_branco, pontos_preto = calcula_pontos(g)
+    return pontos_branco > pontos_preto
