@@ -117,7 +117,7 @@ def cria_goban_vazio(n):
 
 def cria_goban(n, ib, ip):
     if n not in [9, 13, 19] or not isinstance(ib, tuple) or not isinstance(ip, tuple):
-        raise ValueError('cria_goban: argumento invalidos')
+        raise ValueError('cria_goban: argumentos invalidos')
     
     g = cria_goban_vazio(n)
 
@@ -138,16 +138,7 @@ def cria_goban(n, ib, ip):
 
 
 def cria_copia_goban(t):
-    n = len(t)
-    g_copia = []
-
-    for col in range(n):
-        col_copia = []
-        for lin in range(n):
-            col_copia.append(t[col][lin])
-        g_copia.append(col_copia)
-    
-    return g_copia
+    return [x if not isinstance(x, list) else x[:] for x in t]
 
 
 
@@ -387,21 +378,21 @@ def calcula_pontos(g):
 
 
 def eh_jogada_legal(g, i, p, l):
-    if obtem_pedra(g, i) != cria_pedra_neutra() or p == cria_pedra_neutra():
+    if not eh_intersecao_valida(g, i) or obtem_pedra(g, i) != cria_pedra_neutra():
         return False
     
     # Suicídio
-    g_temp = coloca_pedra(g, i, p)
-    cadeia = obtem_cadeia(g_temp, i)
-    if not tem_liberdade(g_temp, cadeia):
+    g_copia = cria_copia_goban(g)
+    g_copia = jogada(g_copia, i, p)
+    cadeia = obtem_cadeia(g_copia, i)
+    if not tem_liberdade(g_copia, cadeia):
         return False
     
     # Repetição (ko)
-    if gobans_iguais(g_temp, l):
+    if gobans_iguais(g_copia, l):
         return False
     
     return True
-
 
 
 def turno_jogador(g, p, l):
@@ -410,36 +401,11 @@ def turno_jogador(g, p, l):
     if jogada == 'P':
         return False
     elif eh_intersecao_valida(g, str_para_intersecao(jogada)) and eh_jogada_legal(g, str_para_intersecao(jogada), p, l):
-        coloca_pedra(g, str_para_intersecao(jogada), p)
+        g = coloca_pedra(g, str_para_intersecao(jogada), p)
         return True
-    
 
+ib = tuple(str_para_intersecao(i) for i in ('C1', 'C2', 'C3', 'D2', 'D3', 'D4', 'A3', 'B3'))
+ip = tuple(str_para_intersecao(i) for i in ('A1', 'A2', 'B1', 'E4', 'E5', 'F4', 'F5', 'G6', 'G7'))
+g = cria_goban(9, ib, ip)
+turno_jogador(g, cria_pedra_branca, cria_goban_vazio(9))
 
-def go(n, tb, tp):
-    if not eh_goban(cria_goban_vazio(n)) or not isinstance(tb, tuple) or not isinstance(tp, tuple):
-        raise ValueError('go: argumentos invalidos')
-    
-    g = cria_goban(n, tb, tp)
-    ultimo_estado = None
-    passou = [False, False]  # Lista para verificar se cada jogador passou a vez
-
-    while True:
-        goban_para_str(g)
-        pontos_branco, pontos_preto = calcula_pontos(g)
-        print(f"Branco (O) tem {pontos_branco} pontos")
-        print(f"Preto (X) tem {pontos_preto} pontos")
-
-        jogador = cria_pedra_branca() if sum(passou) % 2 == 0 else cria_pedra_preta()
-        if not turno_jogador(g, jogador, ultimo_estado):
-            passou[sum(passou) % 2] = True
-        else:
-            passou[sum(passou) % 2] = False
-            ultimo_estado = cria_copia_goban(g)
-
-        if all(passou):  # Ambos os jogadores passaram
-            break
-
-    pontos_branco, pontos_preto = calcula_pontos(g)
-    print(f"Branco (O) finalizou com {pontos_branco} pontos")
-    print(f"Preto (X) finalizou com {pontos_preto} pontos")
-    return pontos_branco > pontos_preto
