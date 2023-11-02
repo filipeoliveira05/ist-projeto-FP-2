@@ -1,3 +1,54 @@
+'''
+FP 23/24 Projeto 2
+Filipe Oliveira, ist1110633
+
+Descrição do projeto:
+O seguinte código permite jogar um jogo completo de Go de dois jogadores.
+Contém um conjunto de tipos abstratos de dados que são utilizados para manipular
+informação necessária no decorrer do jogo, bem como um conjunto de funções adicionais.
+
+Descrição do jogo Go:
+Jogo de tabuleiro de estratégia para dois jogadores.
+Os jogadores colocam alternadamente pedras da sua cor no tabuleiro.
+O objetivo é formar territórios ao redor de regiões vazias no tabuleiro.
+Ganha quem atingir a maior pontuação, ou seja. quem controlar um território maior.
+
+Termos:
+--> Goban) tabuleiro de Go, estrutura retangular de n x n linhas (n pode ser 9, 13 ou 19).
+--> Interseção) ponto no goban onde as linhas se cruzam, identificadas por uma letra maiúscula de A a S, e por um número de 1 a 19.
+--> Pedra) Branca ou preta, dependendo do jogador.
+--> Interseções adjacentes) interseções conectadas por uma linha vertical/horizontal sem outras interseções entre elas.
+--> Interseção livre) interseção não ocupada por uma pedra.
+--> Interseção ocupada) interseção ocupada por uma pedra.
+--> Ordem de leitura) da esquerda para a direita, seguida de baixo para cima.
+--> Interseções conectadas) interseções com pedras do mesmo tipo em que é possível traçar um percurso entre elas, passando sempre por interseções do mesmo tipo.
+--> Cadeia de pedras) conjunto de uma ou mais interseções ocupadas por pedras da mesma cor conectadas entre si e não conectadas a nenhuma outra pedra da mesma cor.
+--> Liberdades de uma pedra) conjunto de interseções livres adjacentes a essa pedra ou adjacente a uma pedra da mesma cadeia.
+--> Território) conjunto maximal de uma ou mais interseções livres que estão todas conectadas entre si e que não estão conectadas a nenhuma outra interseção livre.
+--> Fronteira de um território) conjunto de todas as interseções ocupadas por pedras adjacentes a um território.
+--> Território de um jogador) a sua fronteira está ocupada apenas por pedras da cor desse jogador. 
+
+Regras do jogo:
+1. No início do jogo, o tabuleiro está vazio.
+2. O jogador com pedras pretas é o primeiro a jogar.
+3. Os jogadores alternam em turnos subsequentes.
+4. No seu turno, um jogador pode passar a vez ou jogar.
+5. Uma jogada consiste na seguintes etapas, realizadas em ordem:
+    a) Colocar: coloca uma pedra da sua cor numa interseção vazia.
+    b) Capturar: retira do tabuleiro quaisquer pedras da cor do oponente que não tenham liberdades.
+6. As pedras não podem ser movidas para outra interseção após serem jogadas.
+7. As seguintes restrições devem ser consideradas na colocação das pedras:
+    a) Suicídio: ilegal se uma ou mais pedras da cor do jogador ficarem sem liberdades após a resolução da jogada.
+    b) Repetição (ko): ilegal se tiver o efeito de criar um estado do tabuleiro que ocorreu anteriormente no jogo.
+8. Jogo termina quando ambos os jogadores tiverem passado a vez consecutivamente.
+9. A pontuação de um jogador é obtida como a soma do número total de interseções que:
+    a) Pertencem ao território desse jogador.
+    b) Estão ocupadas por uma pedra da cor daquele jogador.
+10. Ganha o jogador com maior pontuação.
+11. Em caso de empate, o jogador branco é o vencedor.
+'''
+
+
 #TAD Intersecao
 def cria_intersecao(col, lin):
     """
@@ -10,10 +61,14 @@ def cria_intersecao(col, lin):
     :return: interseção
     """
 
+    #verifica a validade do caracter correspondente à coluna.
     if not isinstance(col, str) or not ord('A') <= ord(col) <= ord('S') or len(col) != 1:
         raise ValueError('cria_intersecao: argumentos invalidos')
+    
+    #verifica a validade dp inteiro correspondente à linha
     if not isinstance(lin, int) or not (1 <= lin <= 19):
         raise ValueError('cria_intersecao: argumentos invalidos')
+    
     return (col, lin)
 
 
@@ -49,7 +104,8 @@ def eh_intersecao(arg):
     :param arg: argumento (universal)
     :return: True/False (bool)
     """
-
+    
+    #verifica a validade do argumento, de modo a ser um TAD intersecao.
     return (isinstance(arg, tuple) and len(arg) == 2 and 
             isinstance(obtem_col(arg), str) and isinstance(obtem_lin(arg), int) and 
             ord('A') <= ord(obtem_col(arg)) <= ord('S') and len(obtem_col) == 1 and 1 <= obtem_lin(arg) <= 19)
@@ -85,9 +141,11 @@ def str_para_intersecao(s):
     :param s: cadeia de caracteres (str)
     :return: interseção
     """
-
+    
+    #obtém a coluna e linha do argumento.
     col = s[0]
     lin = int(s[1:])
+
     return (col, lin)
 
 
@@ -100,11 +158,13 @@ def obtem_intersecoes_adjacentes(i, l):
     :param l: interseção
     :return: tuplo com interseções adjacentes a i (tuple)
     """
-
+    
+    #obtém a coluna e linha da interseção.
     col = obtem_col(i)
     lin = obtem_lin(i)
     i_adjacents = []
     
+    #obtém as quatro interseções adjacentes possíveis, independentemente de serem válidas no goban.
     i_adjacents_possible = [
         (chr(ord(col)), lin - 1),
         (chr(ord(col) - 1), lin),
@@ -112,6 +172,7 @@ def obtem_intersecoes_adjacentes(i, l):
         (chr(ord(col)), lin + 1),
     ]
     
+    #verifica, entre as quatro interseções adjacentes possíveis, quais delas são válidas no goban.
     for a in i_adjacents_possible:
         if ord('A') <= ord(obtem_col(a)) <= ord(obtem_col(l)) and 1 <= obtem_lin(a) <= obtem_lin(l):
             i_adjacents.append(a)
@@ -218,6 +279,7 @@ def pedra_para_str(p):
     :return: cadeia de caracteres (str)
     """
 
+    #verifica o tipo de pedra dada.
     if p == cria_pedra_branca():
         return 'O'
     elif p == cria_pedra_preta():
@@ -228,7 +290,7 @@ def pedra_para_str(p):
 
 def eh_pedra_jogador(p):
     """
-    Devolve True caso a pedra p seja de um jogador e False caso contrário
+    Devolve True caso a pedra p seja de um jogador e False caso contrário.
 
     :param p: pedra
     :return: True/False (bool)
@@ -241,15 +303,18 @@ def eh_pedra_jogador(p):
 #TAD Goban
 def cria_goban_vazio(n):
     """
-    Add Description Here
+    Devolve um goban de tamanho n x n, sem interseções ocupadas.
+    Caso o argumento não seja válido, gera um erro.
 
-    :param n: Add Type
-    :return: Add Type
+    :param n: dimensão do goban (int)
+    :return: goban
     """
 
+    #verifica se a dimensão do goban é válida
     if n not in [9, 13, 19]:
         raise ValueError('cria_goban_vazio: argumento invalido')
     
+    #cria um goban vazio, representado como uma lista de listas.
     col = [cria_pedra_neutra(),] * int(n)
     g_empty = [col[:] for _ in range(int(n))]
     
@@ -258,44 +323,47 @@ def cria_goban_vazio(n):
 
 def cria_goban(n, ib, ip):
     """
-    Add Description Here
-
-    :param n: Add Type
-    :param ib: Add Type
-    :param ip: Add Type
-    :return: Add Type
+    Devolve um goban de tamanho n x n, com as interseções dos tuplos ib e ip ocupadas por pedras brancas e pretas, respetivamente.
+    Caso os argumentos não sejam válidos, gera um erro.
+    
+    :param n: dimensão do goban (int)
+    :param ib: tuplo de interseções 'brancas' (tuple)
+    :param ip: tuplo de interseções 'pretas' (tuple)
+    :return: goban
     """
 
+    #verifica se a dimensão do goban é válida e se os argumentos ib e ip são tuplos.
     if n not in [9, 13, 19] or not isinstance(ib, tuple) or not isinstance(ip, tuple):
         raise ValueError('cria_goban: argumentos invalidos')
     
-    # Verifica se existem elementos iguais em ib
+    # Verifica se existem elementos iguais em ib.
     el_ib = set()
     for el in ib:
         if el in el_ib:
             raise ValueError('cria_goban: argumentos invalidos')
         el_ib.add(el)
 
-    # Verifica se existem elementos iguais em ip
+    # Verifica se existem elementos iguais em ip.
     el_ip = set()
     for el in ip:
         if el in el_ip:
             raise ValueError('cria_goban: argumentos invalidos')
         el_ip.add(el)
 
-    # Verifica se existem elementos iguais em ambos os tuplos
+    # Verifica se existem elementos iguais em ambos os tuplos.
     if el_ib & el_ip:
         raise ValueError('cria_goban: argumentos invalidos')
 
     g = cria_goban_vazio(n)
 
+    #preenche as interseções do tuplo ib com pedras brancas.
     for b in tuple(ib):
         col_index = ord(obtem_col(b)) - ord('A')
         lin_index = int(obtem_lin(b)) - 1
         if 0 <= col_index < n and 0 <= lin_index < n:
             g[col_index][lin_index] = cria_pedra_branca()
 
-
+    #preenche as interseções do tuplo ip com pedras pretas.
     for p in tuple(ip):
         col_index = ord(obtem_col(p)) - ord('A')
         lin_index = int(obtem_lin(p)) - 1
@@ -307,37 +375,44 @@ def cria_goban(n, ib, ip):
 
 def cria_copia_goban(t):
     """
-    Add Description Here
+    Recebe um goban.
+    Devolve uma cópia do goban.
 
-    :param t: Add Type
-    :return: Add Type
+    :param t: goban
+    :return: goban
     """
 
+    #deep copy do goban dado
     return [x if not isinstance(x, list) else x[:] for x in t]
 
 
 
 def obtem_ultima_intersecao(g):
     """
-    Add Description Here
+    Recebe um goban.
+    Devolve a intersecao que corresponde ao canto superior direito do goban.
 
-    :param g: Add Type
-    :return: Add Type
+    :param g: goban
+    :return: interseção
     """
 
+    #obtém coluna e linha da última interseção do goban.
     n = len(g)
     col = chr(ord('A') + n - 1)
     lin = n
+
     return (col, lin)
 
 
 def obtem_pedra(g, i):
     """
-    Add Description Here
+    Recebe um goban e uma interseção.
+    Devolve a pedra na interseção i do goban g.
+    Caso a interseção não esteja ocupada, devolve uma pedra neutra.
 
-    :param g: Add Type
-    :param i: Add Type
-    :return: Add Type
+    :param g: goban
+    :param i: interseção
+    :return: pedra
     """
 
     col_index = ord(obtem_col(i)) - ord('A')
@@ -354,11 +429,13 @@ def obtem_pedra(g, i):
 
 def obtem_cadeia(g, i):
     """
-    Add Description Here
+    Recebe um goban e uma interseção.
+    Devolve o tuplo de interseções, em ordem de leitura, das pedras da mesma cor que formam a cadeia que passa pela interseção i.
+    Se a posição não estiver ocupada, devolve a cadeia de interseções livres.
 
-    :param g: Add Type
-    :param i: Add Type
-    :return: Add Type
+    :param g: goban
+    :param i: interseção
+    :return: interseções da cadeia (tuple)
     """
 
     if obtem_pedra(g, i) == cria_pedra_branca():
@@ -383,12 +460,13 @@ def obtem_cadeia(g, i):
 
 def coloca_pedra(g, i, p):
     """
-    Add Description Here
+    Recebe um goban, uma interseção e uma pedra.
+    Modifica destrutivamente o goban g colocando a pedra do jogador p na interseção i, devolvendo o próprio goban.
 
-    :param g: Add Type
-    :param i: Add Type
-    :param p: Add Type
-    :return: Add Type
+    :param g: goban
+    :param i: interseção
+    :param p: pedra
+    :return: goban
     """
 
     col_index = ord(obtem_col(i)) - ord('A')
@@ -403,11 +481,12 @@ def coloca_pedra(g, i, p):
 
 def remove_pedra(g, i):
     """
-    Add Description Here
+    Recebe um goban e uma interseção.
+    Modifica destrutivamente o goban g, removendo a pedra da interseção i, devolvendo o próprio goban.
 
-    :param g: Add Type
-    :param i: Add Type
-    :return: Add Type
+    :param g: goban
+    :param i: interseção
+    :return: goban
     """
 
     col_index = ord(obtem_col(i)) - ord('A')
@@ -419,14 +498,15 @@ def remove_pedra(g, i):
 
     return g
 
-
+#simplificar
 def remove_cadeia(g, t):
     """
-    Add Description Here
+    Recebe um goban e um tuplo de interseções.
+    Modifica destrutivamente o goban g, removendo as pedras nas interseções do tuplo t, devolvendo o próprio goban.
 
-    :param g: Add Type
-    :param t: Add Type
-    :return: Add Type
+    :param g: goban
+    :param t: tuplo de interseções (tuple)
+    :return: goban
     """
 
     n = len(g)
@@ -442,10 +522,10 @@ def remove_cadeia(g, t):
 
 def eh_goban(arg):
     """
-    Add Description Here
+    Devolve True caso o argumento seja um TAD goban e False caso contrário.
 
-    :param arg: Add Type
-    :return: Add Type
+    :param arg: argumento (universal)
+    :return: True/False (bool)
     """
 
     if not isinstance(arg, list) or len(arg) not in [9, 13, 19]:
@@ -462,11 +542,12 @@ def eh_goban(arg):
 
 def eh_intersecao_valida(g, i):
     """
-    Add Description Here
+    Recebe um goban, g, e uma interseção, i.
+    Devolve True se i é uma interseção válida dentro do goban e False caso contrário.
 
-    :param g: Add Type
-    :param i: Add Type
-    :return: Add Type
+    :param g: goban
+    :param i: interseção
+    :return: True/False (bool)
     """
 
     if not isinstance(i, tuple) or len(i) != 2:
@@ -484,11 +565,12 @@ def eh_intersecao_valida(g, i):
 
 def gobans_iguais(g1, g2):
     """
-    Add Description Here
+    Recebe dois gobans, g1 e g2.
+    Devolve True apenas se g1 e g2 forem gobans e forem iguais.
 
-    :param g1: Add Type
-    :param g2: Add Type
-    :return: Add Type
+    :param g1: primeiro goban
+    :param g2: segundo goban
+    :return: True/False (bool)
     """
 
     if not eh_goban(g1) or not eh_goban(g2):
@@ -502,10 +584,11 @@ def gobans_iguais(g1, g2):
 
 def goban_para_str(g):
     """
-    Add Description Here
+    Recebe um goban g.
+    Devolve a cadeia de caracteres que representa o goban.
 
-    :param g: Add Type
-    :return: Add Type
+    :param g: goban
+    :return: cadeia de caracteres (str)
     """
 
     LETTERS = tuple('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
@@ -526,10 +609,13 @@ def goban_para_str(g):
 
 def obtem_territorios(g):
     """
-    Add Description Here
+    Recebe um goban g.
+    Devolve o tuplo formado pelos tuplos com as interseções de cada território de g.
+    Devolve as interseções de cada território ordenadas em ordem de leitura do tabuleiro de Go.
+    Devolve os territórios ordenados em ordem de leitura da primeira interseção do território.
 
-    :param g: Add Type
-    :return: Add Type
+    :param g: goban
+    :return: tuplo com territórios (tuple)
     """
 
     territorios = []
@@ -537,11 +623,10 @@ def obtem_territorios(g):
 
     def explorar_territorio(i, territorio):
         """
-        Add Description Here
+        Recebe uma interseção i e um território.
 
-        :param i: Add Type
-        :param territorio: Add Type
-        :return: Add Type
+        :param i: interseção
+        :param territorio: território 
         """
 
         visitadas.add(i)
@@ -565,11 +650,14 @@ def obtem_territorios(g):
 
 def obtem_adjacentes_diferentes(g, t):
     """
-    Add Description Here
+    Recebe um goban, g, e um tuplo com interseções, t.
+    Devolve o tuplo ordenado formado pelas interseções adjacentes às interseções do tuplo t:
+        a) livres, se as interseções do tuplo t estão ocupadas por pedras de jogador (liberdades de uma cadeia de pedras).
+        b) ocupadas por pedras de jogador, se as interseções do tuplo t estão livres (fronteira de um terrritório).
 
-    :param g: Add Type
-    :param t: Add Type
-    :return: Add Type
+    :param g: goban
+    :param t: tuplo com interseções (tuple)
+    :return: tuplo com interseções (tuple)
     """
 
     adjacentes = set()
@@ -589,12 +677,15 @@ def obtem_adjacentes_diferentes(g, t):
 
 def jogada(g, i, p):
     """
-    Add Description Here
+    Recebe um goban, g, uma interseção, i, e uma pedra de jogador, p.
+    Modifica destrutivamente o goban g, colocando a pedra de jogador p na interseção i.
+    Remove todas as pedras do jogador contrário pertencentes a cadeias adjacentes à interseção sem liberdades.
+    Devolve o próprio goban.
 
-    :param g: Add Type
-    :param i: Add Type
-    :param p: Add Type
-    :return: Add Type
+    :param g: goban
+    :param i: interseção
+    :param p: pedra
+    :return: goban alterado
     """
 
     g = coloca_pedra(g, i, p)
@@ -636,10 +727,13 @@ def tem_liberdade(g, cadeia):
 
 def obtem_pedras_jogadores(g):
     """
-    Add Description Here
+    Recebe um goban, g.
+    Devolve um tuplo de dois inteiros:
+        1º inteiro) número de interseções ocupadas por pedras do jogador branco.
+        2º inteiro) número de interseções ocupadas por pedras do jogador preto.
 
-    :param g: Add Type
-    :return: Add Type
+    :param g: goban
+    :return: tuplo de dois inteiros (tuple)
     """
 
     p_b = 0
@@ -658,10 +752,13 @@ def obtem_pedras_jogadores(g):
 
 def calcula_pontos(g):
     """
-    Add Description Here
+    Recebe um goban, g.
+    Devolve um tuplo de dois inteiros:
+        1º inteiro) pontuação do jogador branco.
+        2º inteiro) pontuação do jogador preto.
 
-    :param g: Add Type
-    :return: Add Type
+    :param g: goban
+    :return: tuplo de dois inteiros (tuple)
     """
 
     i_u = obtem_ultima_intersecao(g)
@@ -669,9 +766,9 @@ def calcula_pontos(g):
     if g == cria_goban_vazio(n):
         return (0,0)
     
-    pontos = obtem_pedras_jogadores(g)
-    pontos_branco = pontos[0]
-    pontos_preto = pontos[1]
+    pedras = obtem_pedras_jogadores(g)
+    pontos_branco = pedras[0]
+    pontos_preto = pedras[1]
     
     territorios = obtem_territorios(g)
     
@@ -691,13 +788,15 @@ def calcula_pontos(g):
 
 def eh_jogada_legal(g, i, p, l):
     """
-    Add Description Here
+    Recebe um goban, g, uma interseção, i, uma pedra de jogador, p, e um outro goban, l.
+    Devolve True se a jogada for legal ou False caso contrário, sem modificar g ou l.
+    O goban l representa o estado do tabuleiro que não pode ser obtido após a resolução completa da jogada.
 
-    :param g: Add Type
-    :param i: Add Type
-    :param p: Add Type
-    :param l: Add Type
-    :return: Add Type
+    :param g: goban
+    :param i: interseção
+    :param p: pedra
+    :param l: goban que não pode ser obtido
+    :return: True/False (bool)
     """
 
     if not eh_intersecao_valida(g, i) or obtem_pedra(g, i) != cria_pedra_neutra():
@@ -719,12 +818,20 @@ def eh_jogada_legal(g, i, p, l):
 
 def turno_jogador(g, p, l):    
     """
-    Add Description Here
+    Recebe um goban, g, uma pedra de jogador, p, e um outro goban, l.
+    Oferece ao jogador das pedras p a opção de passar ou de colocar uma pedra própria numa interseção.
+    Se o jogador passar, devolve False, sem modificar os argumentos.
+    Se o jogador não passar, devolve True, modificando destrutivamente g, de acordo com a jogada realizada.
+    Apresenta uma mensagem até que o jogador introduza:
+        a)'P' (passar)
+        ou
+        b) representação externa de uma interseção do goban que corresponda a uma jogada legal.
+    O goban l representa o estado do tabuleiro que não pode ser obtido após a resolução completa da jogada.
 
-    :param g: Add Type
-    :param p: Add Type
-    :param l: Add Type
-    :return: Add Type
+    :param g: goban
+    :param p: pedra
+    :param l: goban que não pode ser obtido
+    :return: True/False (bool)
     """
 
     while True:
@@ -740,12 +847,18 @@ def turno_jogador(g, p, l):
 
 def go(n, tb, tp):
     """
-    Add Description Here
+    Permite jogar um jogo completo de Go de dois jogadores.
+    Recebe um inteiro (dimensão do tabuleiro), n, e dois tuplos, tb e tp, potencialmente vazios:
+        tb) contém a representação externa das interseções ocupadas por pedras brancas.
+        tp) contém a representação externa das interseções ocupadas por pedras pretas.
+    O jogo termina quando os dois jogadores passam a vez de jogar consecutivamente.
+    Devolve True se o jogador das pedras brancas conseguir ganhar o jogo, ou False caso contrário.
+    Caso os argumentos não sejam válidos, gera um erro.
 
-    :param n: Add Type
-    :param tb: Add Type
-    :param tp: Add Type
-    :return: Add Type
+    :param n: dimensão do goban (int) 
+    :param tb: tuplo de interseções 'brancas' (tuple)
+    :param tp: tuplo de interseções 'pretas' (tuple)
+    :return: True/False (bool)
     """
 
     try:
@@ -758,7 +871,9 @@ def go(n, tb, tp):
     ultimo_estado = None
 
     while True:
-        pontos_branco, pontos_preto = calcula_pontos(g)
+        pontos = calcula_pontos(g)
+        pontos_branco = pontos[0]
+        pontos_preto = pontos [1]
         print(f"Branco (O) tem {pontos_branco} pontos")
         print(f"Preto (X) tem {pontos_preto} pontos")
         print(goban_para_str(g))
@@ -767,7 +882,9 @@ def go(n, tb, tp):
         if not turno_preto:
             break
 
-        pontos_branco, pontos_preto = calcula_pontos(g)
+        pontos = calcula_pontos(g)
+        pontos_branco = pontos[0]
+        pontos_preto = pontos [1]
         print(f"Branco (O) tem {pontos_branco} pontos")
         print(f"Preto (X) tem {pontos_preto} pontos")
         print(goban_para_str(g))
@@ -778,7 +895,7 @@ def go(n, tb, tp):
         
         ultimo_estado = cria_copia_goban(g)
 
-    pontos_branco, pontos_preto = calcula_pontos(g)
+    pontos = calcula_pontos(g)
+    pontos_branco = pontos[0]
+    pontos_preto = pontos [1]
     return pontos_branco > pontos_preto
-
-
