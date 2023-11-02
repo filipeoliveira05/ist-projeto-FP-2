@@ -62,11 +62,11 @@ def cria_intersecao(col, lin):
     """
 
     #verifica a validade do caracter correspondente à coluna.
-    if not isinstance(col, str) or not ord('A') <= ord(col) <= ord('S') or len(col) != 1:
+    if not isinstance(col, str) or len(col) != 1 or not ord('A') <= ord(col) <= ord('S'):
         raise ValueError('cria_intersecao: argumentos invalidos')
     
     #verifica a validade dp inteiro correspondente à linha
-    if not isinstance(lin, int) or not (1 <= lin <= 19):
+    if not isinstance(lin, int) or isinstance(lin, bool) or not (1 <= lin <= 19):
         raise ValueError('cria_intersecao: argumentos invalidos')
     
     return (col, lin)
@@ -383,6 +383,14 @@ def cria_goban(n, ib, ip):
         raise ValueError('cria_goban: argumentos invalidos')
 
     g = cria_goban_vazio(n)
+
+    #verifica se os elementos e ib e ip são válidos
+    for el in ib:
+        if not eh_intersecao_valida(g, el):
+            raise ValueError('cria_goban: argumentos invalidos')
+    for el in ip:
+        if not eh_intersecao_valida(g, el):
+            raise ValueError('cria_goban: argumentos invalidos')
 
     #preenche as interseções do tuplo ib com pedras brancas.
     for b in tuple(ib):
