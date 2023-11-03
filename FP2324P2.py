@@ -675,8 +675,8 @@ def goban_para_str(g):
         #itera pelas colunas do goban
         for j in range(n_l):
             #obtém o estado da pedra na interseção atual, e adiciona-o à cadeia
-            estado_pedra = obtem_pedra(g, f'{LETTERS[j]}{i + 1}')
-            cad += estado_pedra + ' '
+            pedra_estado = obtem_pedra(g, f'{LETTERS[j]}{i + 1}')
+            cad += pedra_estado + ' '
         #adiciona o número da linha com espaço à direita
         cad += '{:>2}\n'.format(i + 1)
     
@@ -699,12 +699,12 @@ def obtem_territorios(g):
     """
 
     #lista que armazena os territóris encontrados
-    territorios = []
+    territories = []
 
     #conjunto que armazena as interseções já visitadas
-    visitadas = set()
+    visited = set()
 
-    def explorar_territorio(i, territorio):
+    def explorar_territorio(i, territory):
         """
         Função auxiliar para explorar um território a partir de uma interseção.
 
@@ -713,17 +713,17 @@ def obtem_territorios(g):
         """
 
         #marca a interseção como visitada e adiciona-a ao território
-        visitadas.add(i)
-        territorio.add(i)
+        visited.add(i)
+        territory.add(i)
 
         #obtém interseções adjacentes à interseção atual
-        adjacentes = obtem_intersecoes_adjacentes(i, obtem_ultima_intersecao(g))
+        adjacents = obtem_intersecoes_adjacentes(i, obtem_ultima_intersecao(g))
         
         #itera pelas interseções adjacentes
-        for adjacente in adjacentes:
+        for adjacent in adjacents:
             #se a interseção adjacente estiver vazia e não foi 'visitada', explora o território a partir dela
-            if obtem_pedra(g, adjacente) == cria_pedra_neutra() and adjacente not in visitadas:
-                explorar_territorio(adjacente, territorio)
+            if obtem_pedra(g, adjacent) == cria_pedra_neutra() and adjacent not in visited:
+                explorar_territorio(adjacent, territory)
     
     #itera pelas iterseções do goban
     for col in range(len(g)):
@@ -732,14 +732,14 @@ def obtem_territorios(g):
             i = cria_intersecao(chr(ord('A') + col), lin + 1)
 
             #se a interseção estiver vazia e se ainda não foi 'visitada', explora o território a partir dela
-            if obtem_pedra(g, i) == cria_pedra_neutra() and i not in visitadas:
-                territorio = set()
-                explorar_territorio(i, territorio)
+            if obtem_pedra(g, i) == cria_pedra_neutra() and i not in visited:
+                territory = set()
+                explorar_territorio(i, territory)
 
                 #adiciona as interseções do território à lista final de territórios
-                territorios.append(ordena_intersecoes(tuple(territorio)))
+                territories.append(ordena_intersecoes(tuple(territory)))
 
-    return ordena_intersecoes(territorios)
+    return ordena_intersecoes(territories)
 
 
 
@@ -756,24 +756,24 @@ def obtem_adjacentes_diferentes(g, t):
     """
 
     #conjunto que armazena interseções adjacentes diferentes
-    adjacentes_diferentes = set()
+    adjacents_different = set()
 
     #itera pelas interseções do tuplo dado
     for i in t:
         #obtém as interseções adjacentes à interseção atual
-        adjacentes = obtem_intersecoes_adjacentes(i, obtem_ultima_intersecao(g))
+        adjacents = obtem_intersecoes_adjacentes(i, obtem_ultima_intersecao(g))
 
         #itera pelas interseções adjacentes
-        for adjacente in adjacentes:
+        for adjacent in adjacents:
             #verifica se a interseção adjacente é válida
-            if eh_intersecao_valida(g, adjacente):
+            if eh_intersecao_valida(g, adjacent):
                 #se a interseção do tuplo estiver vazia e a adjacente não, ou vice-versa, adiciona a adjacente ao conjunto final
-                if obtem_pedra(g, i) == cria_pedra_neutra() and obtem_pedra(g, adjacente) != cria_pedra_neutra():
-                    adjacentes_diferentes.add(adjacente)
-                elif obtem_pedra(g, i) != cria_pedra_neutra() and obtem_pedra(g, adjacente) == cria_pedra_neutra():
-                    adjacentes_diferentes.add(adjacente)
+                if obtem_pedra(g, i) == cria_pedra_neutra() and obtem_pedra(g, adjacent) != cria_pedra_neutra():
+                    adjacents_different.add(adjacent)
+                elif obtem_pedra(g, i) != cria_pedra_neutra() and obtem_pedra(g, adjacent) == cria_pedra_neutra():
+                    adjacents_different.add(adjacent)
 
-    return ordena_intersecoes(tuple(sorted(adjacentes_diferentes)))
+    return ordena_intersecoes(tuple(sorted(adjacents_different)))
 
 
 
@@ -794,29 +794,29 @@ def jogada(g, i, p):
     g = coloca_pedra(g, i, p)
     
     #lista para armazenar cadeias adjacentes à interseção i
-    cadeias_adjacentes = []
+    chains_adjacents = []
 
     #obtém interseções adjacentes à interseção i, e itera por elas
-    for adjacente in obtem_intersecoes_adjacentes(i, obtem_ultima_intersecao(g)):
+    for adjacent in obtem_intersecoes_adjacentes(i, obtem_ultima_intersecao(g)):
         #se a interseção adjacente não estiver vazia e se a sua cadeia não estiver na lista de cadeias adjacentes, adiciona-a a essa lista
-        if obtem_pedra(g, adjacente) != cria_pedra_neutra() and obtem_cadeia(g, adjacente) not in cadeias_adjacentes:
-            cadeias_adjacentes.append(obtem_cadeia(g, adjacente))
+        if obtem_pedra(g, adjacent) != cria_pedra_neutra() and obtem_cadeia(g, adjacent) not in chains_adjacents:
+            chains_adjacents.append(obtem_cadeia(g, adjacent))
     
     #determina o adversário do jogador atual
     if p == cria_pedra_preta():
-        adversario = cria_pedra_branca()
+        opponent = cria_pedra_branca()
     else:
-        adversario = cria_pedra_preta()
+        opponent = cria_pedra_preta()
 
     #remove cadeias do adversário sem liberdades, através da função auxiliar tem_liberdade
-    for cadeia in cadeias_adjacentes:
-        if obtem_pedra(g, cadeia[0]) == adversario and not tem_liberdade(g, cadeia):
-            g = remove_cadeia(g, cadeia)
+    for chain in chains_adjacents:
+        if obtem_pedra(g, chain[0]) == opponent and not tem_liberdade(g, chain):
+            g = remove_cadeia(g, chain)
     
     return g
 
 
-def tem_liberdade(g, cadeia):
+def tem_liberdade(g, chain):
     """
     Recebe um goban g e uma cadeia de pedras do goban.
     Devolve True se a cadeia de pedras têm liberdade, e False caso contrário.
@@ -827,16 +827,16 @@ def tem_liberdade(g, cadeia):
     """
 
     #itera pelas interseções da cadeia
-    for intersecao in cadeia:
+    for i in chain:
         #obtém as interseções adjacentes à interseção atual
-        adjacentes = obtem_intersecoes_adjacentes(intersecao, obtem_ultima_intersecao(g))
+        adjacents = obtem_intersecoes_adjacentes(i, obtem_ultima_intersecao(g))
 
         #itera pelas interseções adjacentes
-        for adjacente in adjacentes:
+        for adjacent in adjacents:
             #verifica se a interseção adjacente é válida
-            if eh_intersecao_valida(g, adjacente):
+            if eh_intersecao_valida(g, adjacent):
                 #se a interseção adjacente está vazia, a cadeia tem liberdade e retorna True
-                if obtem_pedra(g, adjacente) == cria_pedra_neutra():
+                if obtem_pedra(g, adjacent) == cria_pedra_neutra():
                     return True
     
     #se não houver interseções adjacentes vazias, a cadeia não tem liberdade e retorna False
@@ -894,28 +894,28 @@ def calcula_pontos(g):
         return (0,0)
     
     #obtém o número de pedras brancas e pretas no goban, adicionando-o à pontuação final
-    pedras = obtem_pedras_jogadores(g)
-    pontos_branco = pedras[0]
-    pontos_preto = pedras[1]
+    p = obtem_pedras_jogadores(g)
+    pnts_b = p[0]
+    pnts_p = p[1]
     
     #obtém os territórios do goban, iterando por eles
-    territorios = obtem_territorios(g)
-    for territorio in territorios:
+    territories = obtem_territorios(g)
+    for territory in territories:
         #obtém as interseções adjacentes diferentes de cada território
-        fronteira = obtem_adjacentes_diferentes(g, territorio)
+        border = obtem_adjacentes_diferentes(g, territory)
         
         #verifica se todas as interseções da fronteira são do mesmo tipo
-        mesma_cor = all(obtem_pedra(g, i) == obtem_pedra(g, fronteira[0]) for i in fronteira)
+        same_color = all(obtem_pedra(g, i) == obtem_pedra(g, border[0]) for i in border)
         
         #se a fronteira for do mesmo tipo e for 'branca', adiciona pontos ao jogador branco
-        if mesma_cor and obtem_pedra(g, fronteira[0]) == cria_pedra_branca():
-            pontos_branco += len(territorio)
+        if same_color and obtem_pedra(g, border[0]) == cria_pedra_branca():
+            pnts_b += len(territory)
 
         #se a fronteira for do mesmo tipo e for 'preta', adiciona pontos ao jogador preto
-        elif mesma_cor and obtem_pedra(g, fronteira[0]) == cria_pedra_preta():
-            pontos_preto += len(territorio)
+        elif same_color and obtem_pedra(g, border[0]) == cria_pedra_preta():
+            pnts_p += len(territory)
     
-    return (pontos_branco, pontos_preto)
+    return (pnts_b, pnts_p)
 
 
 
@@ -937,14 +937,14 @@ def eh_jogada_legal(g, i, p, l):
         return False
     
     #verifica se a jogada resulta em suicídio (deixar a cadeia sem liberdades), através de uma cópia do goban
-    g_copia = cria_copia_goban(g)
-    g_copia = jogada(g_copia, i, p)
-    cadeia = obtem_cadeia(g_copia, i)
-    if not tem_liberdade(g_copia, cadeia):
+    g_copy = cria_copia_goban(g)
+    g_copy = jogada(g_copy, i, p)
+    chain = obtem_cadeia(g_copy, i)
+    if not tem_liberdade(g_copy, chain):
         return False
     
     #verifica se a jogada repete o estado anterior do tabuleiro (repetição, ko)
-    if gobans_iguais(g_copia, l):
+    if gobans_iguais(g_copy, l):
         return False
     
     return True
@@ -1008,45 +1008,45 @@ def go(n, tb, tp):
         raise ValueError('go: argumentos invalidos')
     
     #representação da pedra branca e preta
-    jogador_branco = cria_pedra_branca()
-    jogador_preto = cria_pedra_preta()
+    player_b = cria_pedra_branca()
+    player_p = cria_pedra_preta()
 
     #estado do goban antes da última jogada
-    ultimo_estado = None
+    last_state = None
 
     while True:
         #mostra a pontuação e o estado atual do goban
-        pontos = calcula_pontos(g)
-        pontos_branco = pontos[0]
-        pontos_preto = pontos [1]
-        print(f"Branco (O) tem {pontos_branco} pontos")
-        print(f"Preto (X) tem {pontos_preto} pontos")
+        pnts = calcula_pontos(g)
+        pnts_b = pnts[0]
+        pnts_p = pnts [1]
+        print(f"Branco (O) tem {pnts_b} pontos")
+        print(f"Preto (X) tem {pnts_p} pontos")
         print(goban_para_str(g))
         
         #turno do jogador preto
-        turno_preto = turno_jogador(g, jogador_preto, ultimo_estado)
-        if not turno_preto:
+        turn_p = turno_jogador(g, player_p, last_state)
+        if not turn_p:
             break
 
         #mostra a pontuação e o estado atual do goban, após a jogada do jogador preto
-        pontos = calcula_pontos(g)
-        pontos_branco = pontos[0]
-        pontos_preto = pontos [1]
-        print(f"Branco (O) tem {pontos_branco} pontos")
-        print(f"Preto (X) tem {pontos_preto} pontos")
+        pnts = calcula_pontos(g)
+        pnts_b = pnts[0]
+        pnts_p = pnts [1]
+        print(f"Branco (O) tem {pnts_b} pontos")
+        print(f"Preto (X) tem {pnts_p} pontos")
         print(goban_para_str(g))
         
         #turno do jogador branco
-        turno_branco = turno_jogador(g, jogador_branco, ultimo_estado)
-        if not turno_branco:
+        turn_b = turno_jogador(g, player_b, last_state)
+        if not turn_b:
             break
         
         #atualiza o último estado do goban antes da próxima jogada
-        ultimo_estado = cria_copia_goban(g)
+        last_state = cria_copia_goban(g)
 
     #calcula a pontuação final e determina o vencedor
-    pontos = calcula_pontos(g)
-    pontos_branco = pontos[0]
-    pontos_preto = pontos [1]
+    pnts = calcula_pontos(g)
+    pnts_b = pnts[0]
+    pnts_p = pnts [1]
 
-    return pontos_branco > pontos_preto
+    return pnts_b > pnts_p
