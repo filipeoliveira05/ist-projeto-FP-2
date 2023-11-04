@@ -1072,5 +1072,3 @@ def go(n, tb, tp):
         return False
     elif pnts_b == pnts_p:
         return True
-
-print(go(9, (), ()))
