@@ -111,8 +111,7 @@ def eh_intersecao(arg):
     #verifica a validade do argumento, de modo a ser um TAD intersecao.
     return (isinstance(arg, tuple) and len(arg) == 2 and 
             isinstance(obtem_col(arg), str) and isinstance(obtem_lin(arg), int) and 
-            ord('A') <= ord(obtem_col(arg)) <= ord('S') and len(obtem_col) == 1 and 1 <= obtem_lin(arg) <= 19)
-
+            len(obtem_col(arg)) == 1 and ord('A') <= ord(obtem_col(arg)) <= ord('S') and 1 <= obtem_lin(arg) <= 19)
 
 
 def intersecoes_iguais(i1, i2):
@@ -338,7 +337,7 @@ def cria_goban_vazio(n):
     """
 
     #verifica se a dimensão do goban é válida
-    if n not in [9, 13, 19]:
+    if n not in [9, 13, 19] or not isinstance(n, int):
         raise ValueError('cria_goban_vazio: argumento invalido')
     
     #cria um goban vazio, representado como uma lista de listas.
@@ -361,7 +360,7 @@ def cria_goban(n, ib, ip):
     """
 
     #verifica se a dimensão do goban é válida e se os argumentos ib e ip são tuplos.
-    if n not in [9, 13, 19] or not isinstance(ib, tuple) or not isinstance(ip, tuple):
+    if n not in [9, 13, 19] or not isinstance(n, int) or not isinstance(ib, tuple) or not isinstance(ip, tuple):
         raise ValueError('cria_goban: argumentos invalidos')
     
     # Verifica se existem elementos iguais em ib.
@@ -722,7 +721,7 @@ def obtem_territorios(g):
         #itera pelas interseções adjacentes
         for adjacent in adjacents:
             #se a interseção adjacente estiver vazia e não foi 'visitada', explora o território a partir dela
-            if obtem_pedra(g, adjacent) == cria_pedra_neutra() and adjacent not in visited:
+            if eh_intersecao_valida(g, adjacent) and obtem_pedra(g, adjacent) == cria_pedra_neutra() and adjacent not in visited:
                 explorar_territorio(adjacent, territory)
     
     #itera pelas iterseções do goban
@@ -732,7 +731,7 @@ def obtem_territorios(g):
             i = cria_intersecao(chr(ord('A') + col), lin + 1)
 
             #se a interseção estiver vazia e se ainda não foi 'visitada', explora o território a partir dela
-            if obtem_pedra(g, i) == cria_pedra_neutra() and i not in visited:
+            if eh_intersecao_valida(g, i) and obtem_pedra(g, i) == cria_pedra_neutra() and i not in visited:
                 territory = set()
                 explorar_territorio(i, territory)
 
@@ -978,10 +977,19 @@ def turno_jogador(g, p, l):
         if move == 'P':
             return False
         
-        #caso do jogador decidir fazer uma jogada válida
-        elif eh_intersecao_valida(g, str_para_intersecao(move)) and eh_jogada_legal(g, str_para_intersecao(move), p, l):
-            jogada(g, str_para_intersecao(move), p)
-            return True
+        #caso do jogador decidir fazer uma jogada
+        try:
+            #tenta converter o input para uma interseção
+            i = str_para_intersecao(move)
+
+            #verifica se o input corresponde a uma interseção válida e a uma jogada legal
+            if eh_intersecao_valida(g, i) and obtem_pedra(g, i) == cria_pedra_neutra() and eh_jogada_legal(g, i, p, l):
+                jogada(g, str_para_intersecao(move), p)
+                return True
+        
+        #se o input náo for válido, continua o loop
+        except ValueError:
+            pass
 
 
 
@@ -1012,9 +1020,13 @@ def go(n, tb, tp):
     player_p = cria_pedra_preta()
 
     #estado do goban antes da última jogada
-    last_state = None
+    last_state_b = None
+    last_state_p = None
 
-    while True:
+    pass_b = False
+    pass_p = False
+
+    while not (pass_b and pass_p):
         #mostra a pontuação e o estado atual do goban
         pnts = calcula_pontos(g)
         pnts_b = pnts[0]
@@ -1024,9 +1036,11 @@ def go(n, tb, tp):
         print(goban_para_str(g))
         
         #turno do jogador preto
-        turn_p = turno_jogador(g, player_p, last_state)
+        turn_p = turno_jogador(g, player_p, last_state_p)
         if not turn_p:
-            break
+            pass_p = True
+        else:
+            pass_p = False
 
         #mostra a pontuação e o estado atual do goban, após a jogada do jogador preto
         pnts = calcula_pontos(g)
@@ -1037,16 +1051,26 @@ def go(n, tb, tp):
         print(goban_para_str(g))
         
         #turno do jogador branco
-        turn_b = turno_jogador(g, player_b, last_state)
+        turn_b = turno_jogador(g, player_b, last_state_b)
         if not turn_b:
-            break
+            pass_b = True
+        else:
+            pass_b = False
         
         #atualiza o último estado do goban antes da próxima jogada
-        last_state = cria_copia_goban(g)
+        last_state_b = cria_copia_goban(g)
+        last_state_p = cria_copia_goban(g)
 
     #calcula a pontuação final e determina o vencedor
     pnts = calcula_pontos(g)
     pnts_b = pnts[0]
     pnts_p = pnts [1]
 
-    return pnts_b > pnts_p
+    if pnts_b > pnts_p:
+        return True
+    elif pnts_b < pnts_p:
+        return False
+    elif pnts_b == pnts_p:
+        return True
+
+print(go(9, (), ()))
