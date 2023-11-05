@@ -977,19 +977,10 @@ def turno_jogador(g, p, l):
         if move == 'P':
             return False
         
-        #caso do jogador decidir fazer uma jogada
-        try:
-            #tenta converter o input para uma interseção
-            i = str_para_intersecao(move)
-
-            #verifica se o input corresponde a uma interseção válida e a uma jogada legal
-            if eh_intersecao_valida(g, i) and obtem_pedra(g, i) == cria_pedra_neutra() and eh_jogada_legal(g, i, p, l):
-                jogada(g, str_para_intersecao(move), p)
-                return True
-        
-        #se o input náo for válido, continua o loop
-        except ValueError:
-            pass
+        #caso do jogador decidir fazer uma jogada válida
+        elif eh_intersecao_valida(g, str_para_intersecao(move)) and eh_jogada_legal(g, str_para_intersecao(move), p, l):
+            jogada(g, str_para_intersecao(move), p)
+            return True
 
 
 
