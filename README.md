@@ -1,47 +1,72 @@
-# FP2324P2 - ist1110633
+# FP 23/24 - Projeto 2
+**Filipe Oliveira**  
+**Número de estudante**: ist1110633
 
-Este repositório deverá conter a solução do seu projecto de FP. 
-A solução deve estar toda ela num único *script* ou programa Python: `FP2324P2.py`. 
-O repositório não deve conter mais nenhum outro programa Python (ficheiro `.py`) ou ficheiro. 
+## Descrição do Projeto
+O seguinte código permite jogar um jogo completo de Go de dois jogadores. Contém um conjunto de tipos abstratos de dados que são utilizados para manipular a informação necessária no decorrer do jogo, bem como um conjunto de funções adicionais.
 
-## O que devem fazer?
-- Fazer **clone** do repositório remoto para o seu computador habitual de trabalho:
-    - Antes de poder clonar o repositório, precisa acrescentar uma chave SSH no seu [perfil de utilizador do GitLab](https://gitlab.rnl.tecnico.ulisboa.pt/-/profile/keys). 
-    - Também precisa instalar o cliente Git na sua máquina de trabalho.
-    - Pode encontrar instruções para gerar um par de chaves SSH [aqui](https://docs.gitlab.com/ee/user/ssh.html#generate-an-ssh-key-pair), para instalação do Git [aqui](https://git-scm.com/downloads) ou na [página da disciplina](https://fenix.tecnico.ulisboa.pt/disciplinas/FProg3/2023-2024/1-semestre/ambiente-de-desenvolvimento).
-- Trabalhar normalmente na sua solução.
-- Podem fazer commit das suas alterações para atualizar o repositório local tantas vezes como desejem.
-- Submeter os seu projecto no repositório remoto (atenção ao limite de submissões sem desconto).
-- (opcional) Se trabalham em mais de um computador, devem de sincronizar com o repositório remoto fazendo um **pull** antes de começar a trabalhar.
+## Descrição do Jogo Go
+O **Go** é um jogo de tabuleiro de estratégia para dois jogadores. Os jogadores colocam alternadamente pedras da sua cor no tabuleiro. O objetivo é formar territórios ao redor de regiões vazias no tabuleiro. Ganha quem atingir a maior pontuação, ou seja, quem controlar um território maior.
 
-## Como fazer uma submissão?
-- Para submeter o projeto é preciso fazer um **push** do conteúdo do repositório local para o repositório remoto.
-- A cada submissão (ou push) é desencadeiado o processo de avaliação automática do projeto. 
-- Os resultados dos testes automáticos (públicos e privados) são enviados por e-mail e podem ser consultados em 
-[http://fp.rnl.tecnico.ulisboa.pt/reports/ist1110633/](http://fp.rnl.tecnico.ulisboa.pt/reports/ist1110633/)
+## Termos
 
+### Goban
+- Tabuleiro de Go, estrutura retangular de **n x n** linhas (n pode ser 9, 13 ou 19).
 
-## O que **NÃO** devem fazer
-- Acrescentar ficheiros, apagar ficheiros, *forks*, novas *branches*, ou qualquer outra operação que altere a estrutura do repositório.
+### Interseção
+- Ponto no **goban** onde as linhas se cruzam, identificadas por uma letra maiúscula de A a S, e por um número de 1 a 19.
 
-## Qual é a forma mais simples (recomendada) de fazer tudo o anterior?
-- Instalar o cliente Git e o Visual Studio Code no seu computador. 
-- Ir a "Project Overview" do seu repositório de projeto no GitLab e escolher "Clone" > "Visual Studio Code (SSH)". Isto lançará o VS code. 
-- Escolher a pasta onde queremos manter a cópia local do projeto e o VS Code realizará o **clone** nesta pasta.
-- Configurar o nome e o e-mail com os que ficarão registradas as alterações no Git. Execute os seguintes comandos num Terminal:
-    - `git config --global user.name "John Doe"`: configura o  nome que aparecerá no registro de alterações, quando as realize.
-    - `git config --global user.email johndoe@example.com:` configura o email que aparecerá no registro de alterações, quando as realize.
-- Trabalhar localmente no projeto utilizando o editor do VS Code. O VS Code nos facilita realizar commits (isto é, atualizações da cópia local do repositório) e pushes (isto é, atualizações do repositório remoto) através do IDE, sem necessidade de comandos no terminal. 
+### Pedra
+- Branca ou preta, dependendo do jogador.
 
-## Qual é a forma ainda mais simples (não recomendada) de fazer tudo o anterior?
-- A interface web do GitLab incorpora um IDE Web. Assim que é possível:
-    - Abrir no browser o ficheiro com a solução do projeto.
-    - Selecionar a opção Edit > Open in Web IDE. Isto lançará um IDE muito parecido com o VS code no nosso browser.
-    - Realizar as alterações do nosso projeto neste editor web e fazer commit das alterações antes de fechar/sair.
-- ATENÇÃO: Como estarão a trabalhar diretamente  no repositório remoto, sempre que façam um commit (registro de alterações), estarão a realizar uma submissão do projeto.
-   
-## Contatos:
+### Interseções adjacentes
+- Interseções conectadas por uma linha vertical/horizontal sem outras interseções entre elas.
 
-LEIC-A/LEGM: [fp@dei.ist.utl.pt](mailto:fp@dei.ist.utl.pt) 
+### Interseção livre
+- Interseção não ocupada por uma pedra.
 
-LEIC-T/LETI: [fp-tagus@tecnico.ulisboa.pt](mailto:fp-tagus@tecnico.ulisboa.pt)
+### Interseção ocupada
+- Interseção ocupada por uma pedra.
+
+### Ordem de leitura
+- Da esquerda para a direita, seguida de baixo para cima.
+
+### Interseções conectadas
+- Interseções com pedras do mesmo tipo em que é possível traçar um percurso entre elas, passando sempre por interseções do mesmo tipo.
+
+### Cadeia de pedras
+- Conjunto de uma ou mais interseções ocupadas por pedras da mesma cor conectadas entre si e não conectadas a nenhuma outra pedra da mesma cor.
+
+### Liberdades de uma pedra
+- Conjunto de interseções livres adjacentes a essa pedra ou adjacente a uma pedra da mesma cadeia.
+
+### Território
+- Conjunto maximal de uma ou mais interseções livres que estão todas conectadas entre si e que não estão conectadas a nenhuma outra interseção livre.
+
+### Fronteira de um território
+- Conjunto de todas as interseções ocupadas por pedras adjacentes a um território.
+
+### Território de um jogador
+- A sua fronteira está ocupada apenas por pedras da cor desse jogador.
+
+---
+
+## Regras do Jogo
+
+1. No início do jogo, o tabuleiro está vazio.
+2. O jogador com pedras **pretas** é o primeiro a jogar.
+3. Os jogadores alternam em turnos subsequentes.
+4. No seu turno, um jogador pode passar a vez ou jogar.
+5. Uma jogada consiste nas seguintes etapas, realizadas em ordem:
+    a) **Colocar**: Coloca uma pedra da sua cor numa interseção vazia.  
+    b) **Capturar**: Retira do tabuleiro quaisquer pedras da cor do oponente que não tenham liberdades.
+6. As pedras **não podem ser movidas** para outra interseção após serem jogadas.
+7. As seguintes restrições devem ser consideradas na colocação das pedras:
+    a) **Suicídio**: Ilegal se uma ou mais pedras da cor do jogador ficarem sem liberdades após a resolução da jogada.  
+    b) **Repetição (ko)**: Ilegal se tiver o efeito de criar um estado do tabuleiro que ocorreu anteriormente no jogo.
+8. O **jogo termina** quando ambos os jogadores tiverem passado a vez consecutivamente.
+9. A **pontuação** de um jogador é obtida como a soma do número total de interseções que:
+    a) Pertencem ao território desse jogador.  
+    b) Estão ocupadas por uma pedra da cor daquele jogador.
+10. **Ganha** o jogador com maior pontuação.
+11. Em caso de **empate**, o jogador **branco** é o vencedor.
